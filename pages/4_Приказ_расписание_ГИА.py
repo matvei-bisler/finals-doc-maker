@@ -1,0 +1,39 @@
+from datetime import date
+
+import streamlit as st
+
+from logic import common as c
+from logic import prikaz_schedule
+from ui_helpers import download_results, scope_widgets, sidebar_data_source
+
+st.set_page_config(page_title="Приказ: расписание ГИА", page_icon="🗓️", layout="wide")
+sid = sidebar_data_source()
+
+st.title("🗓️ Приказ об утверждении расписания ГИА")
+st.caption(
+    "Отдельный PDF на каждое направление подготовки. Тело приказа статично; приложение-расписание "
+    "строится из «2025/26» (кол-во студентов) и «График» (даты защит, этап «защита…»; "
+    "аудитория — колонка «примечание»)."
+)
+
+faculties, directions, programs = scope_widgets(sid, key_prefix="sched")
+
+col1, col2 = st.columns(2)
+with col1:
+    order_date_d = st.date_input("Дата подписания (общая для всех направлений)", value=date(2026, 4, 24))
+with col2:
+    order_num_start = st.number_input("Стартовый № серии", min_value=1, value=1)
+
+sheet_schedule = st.text_input("Лист с датами защит", value=c.SHEET_SCHEDULE,
+                                help="Поменяй, если переименуешь вкладку «График» в «ГИА» и т.п.")
+
+order_date_str = c.date_to_order_string(order_date_d)
+st.caption(f"Пример номера первого приказа серии: {c.order_num_from_date(order_date_str, order_num_start)}")
+
+if st.button("🚀 Сгенерировать", type="primary"):
+    with st.spinner("Читаю таблицы и собираю приказы…"):
+        res = prikaz_schedule.generate(order_date=order_date_str, order_num_start=int(order_num_start),
+                                       sheet_schedule=sheet_schedule,
+                                       faculties=faculties, directions=directions, programs=programs,
+                                       spreadsheet_id=sid)
+    download_results(res, key_prefix="prikaz_schedule")
