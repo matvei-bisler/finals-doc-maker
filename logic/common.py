@@ -25,10 +25,10 @@ SHEET_GEK = "ГЭК"
 SHEET_SCHEDULE = "График"
 SHEET_REGISTRY = "Реестр файлов"
 
-# ---- Ассеты (pics/, fonts/ лежат в Current/, на уровень выше streamlit_app/) ----
+# ---- Ассеты (pics/, fonts/ лежат в корне репозитория, рядом с logic/) ----
 _THIS_DIR = Path(__file__).resolve().parent
 APP_DIR = _THIS_DIR.parent
-ASSETS_ROOT = APP_DIR.parent
+ASSETS_ROOT = APP_DIR
 FONT_PATHS = [str(ASSETS_ROOT / "fonts")]
 
 
@@ -194,7 +194,7 @@ _TMP_DIR = ASSETS_ROOT / ".streamlit_tmp"
 
 
 def compile_typst(doc_text: str) -> bytes:
-    """Компилирует .typ-текст в PDF-байты. root=Current/, чтобы работали /pics/... и шрифты."""
+    """Компилирует .typ-текст в PDF-байты. root=корень репозитория, чтобы работали /pics/... и шрифты."""
     _TMP_DIR.mkdir(exist_ok=True)
     fd, temp_path = tempfile.mkstemp(suffix=".typ", dir=str(_TMP_DIR))
     try:
