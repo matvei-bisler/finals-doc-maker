@@ -1,7 +1,9 @@
 """Протоколы заседаний ГЭК: индивидуальные (по студенту) + о присвоении квалификации (по профилю).
 
 Сквозная нумерация по датам защиты (раньше дата → меньше номер). Если на профиль указано
-несколько дней защиты — обучающиеся делятся по дням поровну (по алфавиту).
+несколько дней защиты — обучающиеся делятся по дням поровну (по алфавиту). При совпадении
+дат (бакалавриат и магистратура одного профиля защищаются в одни и те же дни по «Графику»)
+бакалавриат нумеруется раньше магистратуры.
 """
 from __future__ import annotations
 
@@ -215,20 +217,24 @@ def _topic_ru_en(student: dict) -> str:
     return topic + (" / " + c.escape_typst(title) if title else "")
 
 
+def _is_master(year: int) -> bool:
+    return year == 2
+
+
 def _edu_type(year: int) -> str:
-    return "магистратуры" if year == 2 else "бакалавриата"
+    return "магистратуры" if _is_master(year) else "бакалавриата"
 
 
 def _qualification(year: int) -> str:
-    return "магистр" if year == 2 else "бакалавр"
+    return "магистр" if _is_master(year) else "бакалавр"
 
 
 def _vkr_type_default(year: int, bachelor_label: str, master_label: str) -> str:
-    return master_label if year == 2 else bachelor_label
+    return master_label if _is_master(year) else bachelor_label
 
 
 def _diploma_label(year: int, honors: bool) -> str:
-    base = "диплом магистра" if year == 2 else "диплом бакалавра"
+    base = "диплом магистра" if _is_master(year) else "диплом бакалавра"
     return base + " с отличием" if honors else base
 
 
@@ -352,7 +358,12 @@ def generate(
             "earliest": dts[0] if dts else None,
         })
 
-    infos.sort(key=lambda it: (it["earliest"] is None, it["earliest"] or datetime.max, it["napr"], it["prog"]))
+    # При совпадении дат защиты (в «Графике» они не различаются по курсу, поэтому у бакалавриата
+    # и магистратуры одного профиля даты совпадают) бакалавриат идёт раньше магистратуры.
+    infos.sort(key=lambda it: (
+        it["earliest"] is None, it["earliest"] or datetime.max,
+        it["napr"], it["prog"], _is_master(it["year"]), it["year"],
+    ))
 
     num = 1
     res.log.append(f"Профилей: {len(infos)}")
