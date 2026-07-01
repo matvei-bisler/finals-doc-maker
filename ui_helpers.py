@@ -27,14 +27,14 @@ def require_password():
 
     st.title("🔒 Вход")
     with st.form("login_form"):
-        entered = st.text_input("Пароль", type="password")
+        entered = st.text_input("Женщина-апостол не пускает!", type="password")
         submitted = st.form_submit_button("Войти")
     if submitted:
         if entered == correct_password:
             st.session_state["authenticated"] = True
             st.rerun()
         else:
-            st.error("Неверный пароль")
+            st.error("Я тебя не боюсь, тварь!")
     st.stop()
 
 
