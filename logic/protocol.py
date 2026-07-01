@@ -332,8 +332,10 @@ def generate(
 ) -> c.GenerationResult:
     res = c.GenerationResult()
 
+    # Нумерация должна быть глобальной по всему графику защит, даже если генерируется только
+    # часть программ — поэтому группы строятся по ВСЕМ обучающимся, а фильтр применяется только
+    # к тому, какие профили попадут в результат (см. ниже, после расчёта номеров).
     students_rows = c.fetch_sheet_rows(c.SHEET_STUDENTS, spreadsheet_id)
-    students_rows = c.filter_students(students_rows, faculties, directions, programs)
     gek_rows = c.fetch_sheet_rows(c.SHEET_GEK, spreadsheet_id)
     schedule_rows = c.fetch_sheet_rows(c.SHEET_SCHEDULE, spreadsheet_id)
 
@@ -366,33 +368,38 @@ def generate(
     ))
 
     num = 1
-    res.log.append(f"Профилей: {len(infos)}")
+    res.log.append(f"Профилей (всего по графику): {len(infos)}")
     for it in infos:
         fac, napr, prog, year = it["fac"], it["napr"], it["prog"], it["year"]
+        include = c.matches_filter(it["students"][0], faculties, directions, programs)
+
         comm = commissions.get((fac, prog))
         vkr_type = _vkr_type_default(year, vkr_type_bachelor, vkr_type_master)
         profile_dir = f"{c.sanitize_filename(napr)}/{c.sanitize_filename(prog)}"
 
         start = num
         for student, dt in zip(it["students"], it["student_dates"]):
-            doc = (PREAMBLE + LETTERHEAD
-                   + _build_individual(num, _date_str(dt, default_defense_date), fac, napr, prog,
-                                       form, vkr_type, student, comm, stock_questions))
-            fname = c.sanitize_filename(f"Протокол №{num} {c.g(student, 'ФИО')}.pdf")
-            res.add(f"{profile_dir}/{fname}", doc)
+            if include:
+                doc = (PREAMBLE + LETTERHEAD
+                       + _build_individual(num, _date_str(dt, default_defense_date), fac, napr, prog,
+                                           form, vkr_type, student, comm, stock_questions))
+                fname = c.sanitize_filename(f"Протокол №{num} {c.g(student, 'ФИО')}.pdf")
+                res.add(f"{profile_dir}/{fname}", doc)
             num += 1
 
         total_num = num
-        total_date = _date_str(it["dates"][-1] if it["dates"] else None, default_defense_date)
-        total_doc = (PREAMBLE + LETTERHEAD
-                     + _build_total(total_num, total_date, fac, napr, prog, form, year, it["students"], comm))
-        res.add(f"{profile_dir}/{c.sanitize_filename(f'Протокол №{total_num} о присвоении квалификации.pdf')}", total_doc)
+        if include:
+            total_date = _date_str(it["dates"][-1] if it["dates"] else None, default_defense_date)
+            total_doc = (PREAMBLE + LETTERHEAD
+                         + _build_total(total_num, total_date, fac, napr, prog, form, year, it["students"], comm))
+            res.add(f"{profile_dir}/{c.sanitize_filename(f'Протокол №{total_num} о присвоении квалификации.pdf')}", total_doc)
         num += 1
 
-        days = ", ".join(c.format_date_ru(d) for d in it["dates"]) or "—"
-        res.log.append(f"• {napr} / {prog} ({it['year_s']} курс) — {len(it['students'])} чел.; "
-                        f"протоколы №{start}–{total_num}; дни защиты: {days}"
-                        + ("" if comm else "  [комиссия не задана]"))
+        if include:
+            days = ", ".join(c.format_date_ru(d) for d in it["dates"]) or "—"
+            res.log.append(f"• {napr} / {prog} ({it['year_s']} курс) — {len(it['students'])} чел.; "
+                            f"протоколы №{start}–{total_num}; дни защиты: {days}"
+                            + ("" if comm else "  [комиссия не задана]"))
 
-    res.log.append(f"Всего протоколов: {num - 1}")
+    res.log.append(f"Всего протоколов по графику: {num - 1}; сгенерировано в этой выборке: {len(res.files)}")
     return res

@@ -157,23 +157,29 @@ def parse_year(value) -> int:
 
 
 # ---- Фильтрация по факультету/направлению/программе (для «сгенерировать индивидуально») ----
+def matches_filter(
+    r: dict,
+    faculties: list[str] | None = None,
+    directions: list[str] | None = None,
+    programs: list[str] | None = None,
+) -> bool:
+    """Пустой список/None в любом из фильтров = не фильтровать по этому измерению."""
+    if faculties and g(r, "факультет") not in faculties:
+        return False
+    if directions and g(r, "направление") not in directions:
+        return False
+    if programs and g(r, "программа") not in programs:
+        return False
+    return True
+
+
 def filter_students(
     rows: list[dict],
     faculties: list[str] | None = None,
     directions: list[str] | None = None,
     programs: list[str] | None = None,
 ) -> list[dict]:
-    """Пустой список/None в любом из фильтров = не фильтровать по этому измерению."""
-    def keep(r: dict) -> bool:
-        if faculties and g(r, "факультет") not in faculties:
-            return False
-        if directions and g(r, "направление") not in directions:
-            return False
-        if programs and g(r, "программа") not in programs:
-            return False
-        return True
-
-    return [r for r in rows if keep(r)]
+    return [r for r in rows if matches_filter(r, faculties, directions, programs)]
 
 
 def unique_facets(rows: list[dict]) -> dict[str, list[str]]:
