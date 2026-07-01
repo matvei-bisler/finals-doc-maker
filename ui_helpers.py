@@ -15,7 +15,11 @@ def require_password():
     Если секрет не задан (например, локальная разработка), пропускает без пароля.
     Вызывать сразу после st.set_page_config(), до остального содержимого страницы.
     """
-    correct_password = st.secrets.get("password")
+    try:
+        correct_password = st.secrets.get("password")
+    except Exception:
+        # Секретов вообще нет (ни файла, ни настроенных secrets на Cloud) — доступ открыт.
+        return
     if not correct_password:
         return
     if st.session_state.get("authenticated"):
