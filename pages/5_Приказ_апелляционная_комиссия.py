@@ -5,9 +5,10 @@ import streamlit as st
 
 from logic import common as c
 from logic import prikaz_appeal
-from ui_helpers import download_results, sidebar_data_source
+from ui_helpers import download_results, require_password, sidebar_data_source
 
 st.set_page_config(page_title="Приказ: апелляционная комиссия", page_icon="⚖️", layout="wide")
+require_password()
 sid = sidebar_data_source()
 
 st.title("⚖️ Приказ об утверждении состава апелляционной комиссии")

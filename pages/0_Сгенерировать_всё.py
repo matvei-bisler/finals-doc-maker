@@ -5,9 +5,10 @@ import streamlit as st
 from logic import common as c
 from logic import (dopusk_gia, prikaz_appeal, prikaz_gek, prikaz_schedule, prikaz_topics,
                     protocol, report, reviews, statements)
-from ui_helpers import render_log, scope_widgets, sidebar_data_source
+from ui_helpers import render_log, require_password, scope_widgets, sidebar_data_source
 
 st.set_page_config(page_title="Сгенерировать всё", page_icon="🗂️", layout="wide")
+require_password()
 sid = sidebar_data_source()
 
 st.title("🗂️ Сгенерировать всё разом")

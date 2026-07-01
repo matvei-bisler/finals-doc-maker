@@ -4,9 +4,10 @@ import streamlit as st
 
 from logic import common as c
 from logic import prikaz_schedule
-from ui_helpers import download_results, scope_widgets, sidebar_data_source
+from ui_helpers import download_results, require_password, scope_widgets, sidebar_data_source
 
 st.set_page_config(page_title="Приказ: расписание ГИА", page_icon="🗓️", layout="wide")
+require_password()
 sid = sidebar_data_source()
 
 st.title("🗓️ Приказ об утверждении расписания ГИА")

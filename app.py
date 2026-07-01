@@ -1,9 +1,10 @@
 import streamlit as st
 
 from logic import common as c
-from ui_helpers import sidebar_data_source
+from ui_helpers import require_password, sidebar_data_source
 
 st.set_page_config(page_title="ГЭК: приказы, протоколы, отчёты", page_icon="🎓", layout="wide")
+require_password()
 
 sid = sidebar_data_source()
 

@@ -9,6 +9,31 @@ import streamlit as st
 from logic import common as c
 
 
+def require_password():
+    """Простой парольный доступ: пароль задаётся в secrets.toml как `password = "..."`.
+
+    Если секрет не задан (например, локальная разработка), пропускает без пароля.
+    Вызывать сразу после st.set_page_config(), до остального содержимого страницы.
+    """
+    correct_password = st.secrets.get("password")
+    if not correct_password:
+        return
+    if st.session_state.get("authenticated"):
+        return
+
+    st.title("🔒 Вход")
+    with st.form("login_form"):
+        entered = st.text_input("Пароль", type="password")
+        submitted = st.form_submit_button("Войти")
+    if submitted:
+        if entered == correct_password:
+            st.session_state["authenticated"] = True
+            st.rerun()
+        else:
+            st.error("Неверный пароль")
+    st.stop()
+
+
 def get_spreadsheet_id() -> str:
     return st.session_state.get("spreadsheet_id", c.DEFAULT_SPREADSHEET_ID)
 
