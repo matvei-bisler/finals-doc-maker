@@ -3,7 +3,9 @@
 Сквозная нумерация по датам защиты (раньше дата → меньше номер). Если на профиль указано
 несколько дней защиты — обучающиеся делятся по дням поровну (по алфавиту). При совпадении
 дат (бакалавриат и магистратура одного профиля защищаются в одни и те же дни по «Графику»)
-бакалавриат нумеруется раньше магистратуры.
+бакалавриат нумеруется раньше магистратуры. Вопросы к обучающемуся берутся из столбца
+«вопросы» листа `2025/26` (значения через «;»); если ячейка пустая — используются вопросы
+по умолчанию (stock_questions).
 """
 from __future__ import annotations
 
@@ -238,11 +240,21 @@ def _diploma_label(year: int, honors: bool) -> str:
     return base + " с отличием" if honors else base
 
 
+def _student_questions(student: dict, default_questions: str) -> str:
+    """Вопросы по студенту из столбца «вопросы» (разделены «;»); если пусто — вопросы по умолчанию."""
+    parts = [p.strip() for p in c.g(student, "вопросы").split(";")]
+    parts = [p for p in parts if p]
+    if not parts:
+        return default_questions
+    return "\n".join(f"{i}. {c.escape_typst(p)}" for i, p in enumerate(parts, start=1))
+
+
 def _build_individual(num, defense_date, fac, napr, prog, form, vkr_type, student, comm,
                       stock_questions: str) -> str:
     name = c.escape_typst(c.g(student, "ФИО"))
     supervisor = c.escape_typst(c.g(student, "руководитель"))
     grade = c.parse_grade(c.g(student, "оценка"))
+    stock_questions = _student_questions(student, stock_questions)
 
     head = (
         "#align(center)[\n#v(1em)\n"
